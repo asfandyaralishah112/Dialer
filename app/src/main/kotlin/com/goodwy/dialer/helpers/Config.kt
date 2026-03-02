@@ -11,6 +11,9 @@ import androidx.core.content.ContextCompat
 import com.goodwy.commons.extensions.getDefaultAlarmSound
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.goodwy.dialer.models.SimInfo
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import com.goodwy.commons.helpers.BaseConfig
 import com.goodwy.dialer.extensions.getPhoneAccountHandleModel
 import com.goodwy.dialer.extensions.putPhoneAccountHandle
@@ -376,5 +379,16 @@ class Config(context: Context) : BaseConfig(context) {
     var isRelayEnabled: Boolean
         get() = prefs.getBoolean(IS_RELAY_ENABLED, false)
         set(enabled) = prefs.edit { putBoolean(IS_RELAY_ENABLED, enabled) }
+
+    var remoteSims: List<SimInfo>
+        get() {
+            val json = prefs.getString(REMOTE_SIMS, "") ?: ""
+            return try {
+                if (json.isNotEmpty()) Json.decodeFromString(json) else emptyList()
+            } catch (_: Exception) {
+                emptyList()
+            }
+        }
+        set(sims) = prefs.edit { putString(REMOTE_SIMS, Json.encodeToString(sims)) }
 }
 

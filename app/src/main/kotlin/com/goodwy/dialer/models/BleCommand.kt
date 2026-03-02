@@ -29,6 +29,11 @@ sealed class BleCommand {
         val success: Boolean
     ) : BleCommand()
 
+    @Serializable
+    data class SimInfoSync(
+        val sims: List<SimInfo>
+    ) : BleCommand()
+
     fun toJson(): String = Json.encodeToString(this)
 
     companion object {

@@ -11,12 +11,16 @@ import android.content.IntentFilter
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import android.widget.Toast
 import com.goodwy.dialer.R
 import com.goodwy.dialer.extensions.config
 import com.goodwy.dialer.helpers.BleClientManager
 import com.goodwy.dialer.helpers.BleConstants
 import com.goodwy.dialer.helpers.BleServerManager
+import android.telephony.SubscriptionManager
+import android.telephony.SubscriptionInfo
 import com.goodwy.dialer.models.BleCommand
+import com.goodwy.dialer.models.SimInfo
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -26,6 +30,16 @@ class RelayService : Service() {
     private val TAG = "RelayService"
     private var serverManager: BleServerManager? = null
     private var clientManager: BleClientManager? = null
+    
+    private val subscriptionManager by lazy { getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager }
+    private var localSimList = mutableListOf<SimInfo>()
+    private var remoteSimList = mutableListOf<SimInfo>()
+
+    private val subscriptionListener = object : SubscriptionManager.OnSubscriptionsChangedListener() {
+        override fun onSubscriptionsChanged() {
+            updateLocalSims()
+        }
+    }
 
     private val bluetoothReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -47,7 +61,9 @@ class RelayService : Service() {
         Log.d(TAG, "RelayService onCreate")
         EventBus.getDefault().register(this)
         registerReceiver(bluetoothReceiver, IntentFilter(android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED))
+        subscriptionManager.addOnSubscriptionsChangedListener(subscriptionListener)
         startRelay()
+        updateLocalSims()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -60,6 +76,7 @@ class RelayService : Service() {
         Log.d(TAG, "RelayService onDestroy")
         EventBus.getDefault().unregister(this)
         unregisterReceiver(bluetoothReceiver)
+        subscriptionManager.removeOnSubscriptionsChangedListener(subscriptionListener)
         stopRelay()
     }
 
@@ -85,11 +102,54 @@ class RelayService : Service() {
         clientManager = null
     }
 
+
+    private fun updateLocalSims() {
+        val sims = try {
+            subscriptionManager.activeSubscriptionInfoList?.map {
+                SimInfo(
+                    slotIndex = it.simSlotIndex,
+                    carrierName = it.displayName.toString(),
+                    subscriptionId = it.subscriptionId
+                )
+            } ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+        if (sims != localSimList) {
+            Log.d(TAG, "Local SIMs changed: $sims")
+            localSimList.clear()
+            localSimList.addAll(sims)
+            syncSims()
+        }
+    }
+
+    private fun syncSims() {
+        if (config.isRelayEnabled && config.relayDeviceAddress.isNotEmpty()) {
+            val command = BleCommand.SimInfoSync(localSimList)
+            clientManager?.sendCommand(config.relayDeviceAddress, command)
+        }
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onBleCommand(command: BleCommand) {
-        if (command is BleCommand.Ping) {
-            Log.d(TAG, "Received Ping")
-            // Acknowledgment logic removed as per plan for simple bi-directional ping
+        when (command) {
+            is BleCommand.Ping -> {
+                Log.d(TAG, "Received Ping")
+                Toast.makeText(this, "Ping received!", Toast.LENGTH_SHORT).show()
+                
+                val localStatus = if (localSimList.isEmpty()) "None" else localSimList.joinToString(", ") { it.carrierName }
+                Toast.makeText(this, "Local SIMs: $localStatus", Toast.LENGTH_SHORT).show()
+                
+                val remoteSims = config.remoteSims
+                val remoteStatus = if (remoteSims.isEmpty()) "None" else remoteSims.joinToString(", ") { it.carrierName }
+                Toast.makeText(this, "Remote SIMs: $remoteStatus", Toast.LENGTH_SHORT).show()
+            }
+            is BleCommand.SimInfoSync -> {
+                Log.d(TAG, "Received Remote SIMs: ${command.sims}")
+                config.remoteSims = command.sims
+            }
+            else -> {}
         }
     }
 
