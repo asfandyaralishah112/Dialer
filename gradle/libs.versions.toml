@@ -16,6 +16,7 @@ gradlePlugins-agp = "9.0.0"
 indicatorFastScroll = "fe6ddbc316"
 autofitTextView = "0.2.1"
 libphonenumberVersion = "9.0.23"
+playServicesAuth = "21.3.0"
 #Goodwy
 right-commons = "e00d817e3e"
 badger = "1.1.22"
@@ -43,6 +44,7 @@ indicator-fast-scroll = { module = "com.github.goodwy:IndicatorFastScroll", vers
 autofit-text-view = { module = "me.grantland:autofittextview", version.ref = "autofitTextView" }
 geocoder = { module = "com.googlecode.libphonenumber:geocoder", version.ref = "geocoderVersion" }
 libphonenumber = { module = "com.googlecode.libphonenumber:libphonenumber", version.ref = "libphonenumberVersion" }
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 #Goodwy
 goodwy-commons-gplay = { module = "com.github.goodwy.goodwy-commons:commons-gplay", version.ref = "right-commons" }
 goodwy-commons-foss = { module = "com.github.goodwy.goodwy-commons:commons-foss", version.ref = "right-commons" }

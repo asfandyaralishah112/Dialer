@@ -67,6 +67,7 @@ const val RECENT_OUTGOING_NUMBERS = "recent_outgoing_numbers"
 const val ON_RECENT_CLICK = "on_recent_click"
 const val ON_FAVORITE_CLICK = "on_favorite_click"
 const val FILTER_RECENT_CALLS = "filter_recent_calls"
+const val RELAY_UID = "relay_uid"
 
 const val ALL_TABS_MASK = TAB_CONTACTS or TAB_FAVORITES or TAB_CALL_HISTORY
 

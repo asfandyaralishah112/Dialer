@@ -163,6 +163,7 @@ dependencies {
     implementation(libs.eventbus)
     implementation(libs.libphonenumber)
     implementation(libs.geocoder)
+    implementation(libs.play.services.auth)
     detektPlugins(libs.compose.detekt)
 
     //Goodwy

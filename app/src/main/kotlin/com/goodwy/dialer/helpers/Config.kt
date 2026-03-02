@@ -364,5 +364,8 @@ class Config(context: Context) : BaseConfig(context) {
     var swipeRipple: Boolean
         get() = prefs.getBoolean(SWIPE_RIPPLE, false)
         set(swipeRipple) = prefs.edit { putBoolean(SWIPE_RIPPLE, swipeRipple) }
-}
 
+    var relayUid: String
+        get() = prefs.getString(RELAY_UID, "")!!
+        set(relayUid) = prefs.edit { putString(RELAY_UID, relayUid) }
+}

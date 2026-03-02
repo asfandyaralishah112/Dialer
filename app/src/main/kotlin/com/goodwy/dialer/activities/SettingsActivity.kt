@@ -24,6 +24,9 @@ import com.goodwy.dialer.extensions.*
 import com.goodwy.dialer.helpers.RecentsHelper
 import com.goodwy.dialer.models.RecentCall
 import com.goodwy.dialer.helpers.*
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.gson.Gson
 import com.mikhaellopez.rxanimation.RxAnimation
 import com.mikhaellopez.rxanimation.shake
@@ -47,6 +50,8 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private val binding by viewBinding(ActivitySettingsBinding::inflate)
+    private val identityManager by lazy { IdentityManager(this) }
+
     private val getContent =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) {
@@ -61,6 +66,19 @@ class SettingsActivity : SimpleActivity() {
             RecentsHelper(this).getRecentCalls(queryLimit = QUERY_LIMIT_MAX_VALUE) { recents ->
                 exportCallHistory(recents, uri)
             }
+        }
+    }
+
+    private val googleSignInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            account?.email?.let { email ->
+                identityManager.computeAndStoreUid(email)
+                setupRelayIdentity()
+            }
+        } catch (e: ApiException) {
+            toast(R.string.google_auth_failed)
         }
     }
 
@@ -178,6 +196,8 @@ class SettingsActivity : SimpleActivity() {
 
         setupBlockCallFromAnotherApp()
 
+        setupRelayIdentity()
+
         setupShowSearchBar()
 
         setupGroupCalls()
@@ -215,6 +235,7 @@ class SettingsActivity : SimpleActivity() {
                 settingsCallsLabel,
                 settingsNotificationsLabel,
                 settingsSecurityLabel,
+                settingsRelayLabel,
                 settingsTopAppBarLabel,
                 settingsListViewLabel,
                 settingsBackupsLabel,
@@ -231,6 +252,7 @@ class SettingsActivity : SimpleActivity() {
                 settingsCallsHolder,
                 settingsNotificationsHolder,
                 settingsSecurityHolder,
+                settingsRelayHolder,
                 settingsTopAppBarHolder,
                 settingsListViewHolder,
                 settingsBackupsHolder,
@@ -1847,6 +1869,36 @@ class SettingsActivity : SimpleActivity() {
         settingsAboutVersion.text = fullVersionText
         settingsAboutHolder.setOnClickListener {
             launchAbout()
+        }
+    }
+
+    private fun setupRelayIdentity() {
+        binding.apply {
+            if (identityManager.isLoggedIn()) {
+                settingsRelayLoginHolder.beGone()
+                settingsRelayUidHolder.beVisible()
+                settingsRelayLogoutHolder.beVisible()
+                settingsRelayUid.text = getString(R.string.relay_uid, identityManager.getUid())
+
+                settingsRelayLogoutHolder.setOnClickListener {
+                    ConfirmationDialog(this@SettingsActivity, messageId = R.string.logout_confirmation) {
+                        identityManager.logout()
+                        setupRelayIdentity()
+                    }
+                }
+            } else {
+                settingsRelayLoginHolder.beVisible()
+                settingsRelayUidHolder.beGone()
+                settingsRelayLogoutHolder.beGone()
+
+                settingsRelayLoginHolder.setOnClickListener {
+                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestEmail()
+                        .build()
+                    val client = GoogleSignIn.getClient(this@SettingsActivity, gso)
+                    googleSignInLauncher.launch(client.signInIntent)
+                }
+            }
         }
     }
 
