@@ -26,6 +26,13 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
 
     <uses-permission
         android:name="android.permission.USE_FINGERPRINT"
@@ -174,12 +181,19 @@
             android:exported="true"
             android:label="@string/settings"
             android:parentActivityName=".activities.MainActivity">
-
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".activities.SettingsRelayActivity"
+            android:configChanges="orientation"
+            android:exported="false"
+            android:label="@string/relay_settings"
+            android:parentActivityName=".activities.SettingsActivity" />
+
 
         <activity
             android:name=".activities.SettingsDialpadActivity"
@@ -298,6 +312,12 @@
                 <action android:name="android.telecom.CallScreeningService" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".services.RelayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
 
         <service android:name=".services.TimerService"
             android:foregroundServiceType="specialUse">

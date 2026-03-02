@@ -24,9 +24,6 @@ import com.goodwy.dialer.extensions.*
 import com.goodwy.dialer.helpers.RecentsHelper
 import com.goodwy.dialer.models.RecentCall
 import com.goodwy.dialer.helpers.*
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
 import com.google.gson.Gson
 import com.mikhaellopez.rxanimation.RxAnimation
 import com.mikhaellopez.rxanimation.shake
@@ -50,10 +47,9 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private val binding by viewBinding(ActivitySettingsBinding::inflate)
-    private val identityManager by lazy { IdentityManager(this) }
 
     private val getContent =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
             if (uri != null) {
                 toast(R.string.importing)
                 importCallHistory(uri)
@@ -69,18 +65,6 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
-    private val googleSignInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try {
-            val account = task.getResult(ApiException::class.java)
-            account?.email?.let { email ->
-                identityManager.computeAndStoreUid(email)
-                setupRelayIdentity()
-            }
-        } catch (e: ApiException) {
-            toast(R.string.google_auth_failed)
-        }
-    }
 
     private val productIdX1 = BuildConfig.PRODUCT_ID_X1
     private val productIdX2 = BuildConfig.PRODUCT_ID_X2
@@ -196,7 +180,7 @@ class SettingsActivity : SimpleActivity() {
 
         setupBlockCallFromAnotherApp()
 
-        setupRelayIdentity()
+        setupRelaySettings()
 
         setupShowSearchBar()
 
@@ -235,7 +219,7 @@ class SettingsActivity : SimpleActivity() {
                 settingsCallsLabel,
                 settingsNotificationsLabel,
                 settingsSecurityLabel,
-                settingsRelayLabel,
+                settingsRelaySettingsLabel,
                 settingsTopAppBarLabel,
                 settingsListViewLabel,
                 settingsBackupsLabel,
@@ -252,7 +236,7 @@ class SettingsActivity : SimpleActivity() {
                 settingsCallsHolder,
                 settingsNotificationsHolder,
                 settingsSecurityHolder,
-                settingsRelayHolder,
+                settingsRelaySettingsHolder,
                 settingsTopAppBarHolder,
                 settingsListViewHolder,
                 settingsBackupsHolder,
@@ -1872,35 +1856,12 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
-    private fun setupRelayIdentity() {
-        binding.apply {
-            if (identityManager.isLoggedIn()) {
-                settingsRelayLoginHolder.beGone()
-                settingsRelayUidHolder.beVisible()
-                settingsRelayLogoutHolder.beVisible()
-                settingsRelayUid.text = getString(R.string.relay_uid, identityManager.getUid())
-
-                settingsRelayLogoutHolder.setOnClickListener {
-                    ConfirmationDialog(this@SettingsActivity, messageId = R.string.logout_confirmation) {
-                        identityManager.logout()
-                        setupRelayIdentity()
-                    }
-                }
-            } else {
-                settingsRelayLoginHolder.beVisible()
-                settingsRelayUidHolder.beGone()
-                settingsRelayLogoutHolder.beGone()
-
-                settingsRelayLoginHolder.setOnClickListener {
-                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestEmail()
-                        .build()
-                    val client = GoogleSignIn.getClient(this@SettingsActivity, gso)
-                    googleSignInLauncher.launch(client.signInIntent)
-                }
-            }
+    private fun setupRelaySettings() {
+        binding.settingsRelaySettingsHolder.setOnClickListener {
+            startActivity(Intent(this, SettingsRelayActivity::class.java))
         }
     }
+
 
     private fun setupDisableProximitySensor() {
         binding.apply {

@@ -14,8 +14,11 @@ import com.goodwy.commons.helpers.PurchaseHelper
 import com.goodwy.dialer.extensions.*
 import com.goodwy.dialer.models.TimerEvent
 import com.goodwy.dialer.models.TimerState
+import com.goodwy.dialer.services.RelayService
 import com.goodwy.dialer.services.TimerStopService
 import com.goodwy.dialer.services.startTimerService
+import com.goodwy.dialer.helpers.BleConstants
+import android.content.Intent
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -30,6 +33,13 @@ class App : RightApp(), LifecycleObserver {
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         EventBus.getDefault().register(this)
         PurchaseHelper().initPurchaseIfNeed(this, "309929407")
+        startRelayService()
+    }
+
+    private fun startRelayService() {
+        if (config.isRelayEnabled) {
+            startService(Intent(this, RelayService::class.java))
+        }
     }
 
     override fun onTerminate() {

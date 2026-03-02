@@ -365,7 +365,16 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(SWIPE_RIPPLE, false)
         set(swipeRipple) = prefs.edit { putBoolean(SWIPE_RIPPLE, swipeRipple) }
 
-    var relayUid: String
-        get() = prefs.getString(RELAY_UID, "")!!
-        set(relayUid) = prefs.edit { putString(RELAY_UID, relayUid) }
+    var relayDeviceAddress: String
+        get() = prefs.getString(RELAY_DEVICE_ADDRESS, "")!!
+        set(address) = prefs.edit { putString(RELAY_DEVICE_ADDRESS, address) }
+
+    var relayDeviceName: String
+        get() = prefs.getString(RELAY_DEVICE_NAME, "")!!
+        set(name) = prefs.edit { putString(RELAY_DEVICE_NAME, name) }
+
+    var isRelayEnabled: Boolean
+        get() = prefs.getBoolean(IS_RELAY_ENABLED, false)
+        set(enabled) = prefs.edit { putBoolean(IS_RELAY_ENABLED, enabled) }
 }
+
